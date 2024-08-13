@@ -1,0 +1,10 @@
+results/
+subject_folder/
+subject_folder_backup/
+data/
+Archive/
+*.asv
+*.mat
+*.jpg
+*.fig
+**/.DS_Store
