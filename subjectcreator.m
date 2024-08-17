@@ -1,4 +1,4 @@
-function subjectcreator(dcm_file_path, model_type, noise_magnitude_Ep, noise_magnitude_u, noise_magnitude_erp, Nm, customA1, customA2, customA3, param_key, save_folder, model)
+function subjectcreator(dcm_file_path, model_type, caseType, hE, noise_magnitude_Ep, noise_magnitude_u, noise_magnitude_erp, Nm, customA1, customA2, customA3, param_key, save_folder, model)
 %==========================================================================
 %This function generates simulated subjects based on a given DCM file 
 %and custom connectivity matrices.
@@ -42,7 +42,7 @@ spm('defaults', 'eeg');
 % Configure DCM
 % DCM = spm_dcm_erp_dipfit(DCM);
 DCM.M.Nmax =1;
-DCM.M.hE = 2;
+DCM.M.hE = hE;
 % DCM.options.Nmodes = 16;
 
 U.dt = DCM.xU.dt;
@@ -63,24 +63,42 @@ if ~isfile(customA3)
     error('file not found')
 end
 
+            
 if ~isempty(customA1)
     loadedA1 = load(customA1);
     fields = fieldnames(loadedA1);
     A1 = loadedA1.(fields{1});
-    DCM.A{1, 1} = A1;
 end
 if ~isempty(customA2)
     loadedA2 = load(customA2);
     fields = fieldnames(loadedA2);
     A2 = loadedA2.(fields{1});
-    DCM.A{1, 2} = A2;
 end
 if ~isempty(customA3)
     loadedA3 = load(customA3);
     fields = fieldnames(loadedA3);
     A3 = loadedA3.(fields{1});
-    DCM.A{1, 3} = A3;
 end
+
+switch caseType
+    case 'Amatrix'
+        % When caseType is 'Amatrix'
+        % Assign values to the DCM.A matrix
+        DCM.A{1, 1} = A1;
+        DCM.A{1, 2} = A2;
+        DCM.A{1, 3} = A3;
+        
+    case 'Bmatrix'
+        % When caseType is 'Bmatrix', the A matrix is not pruned
+
+        
+    otherwise
+        % If caseType does not match 'Amatrix' or 'Bmatrix'
+        error('Unknown case type specified.');
+end
+
+
+
 
 % Update DCM.B if all custom matrices are provided
 if ~isempty(customA1) && ~isempty(customA2) && ~isempty(customA3)
@@ -107,13 +125,23 @@ DCM.M.pE.B{1, 1} = DCM.M.pE.B{1, 1} .*  DCM.B{1, 1} - (1 - DCM.B{1, 1}) .* 0;
 % DCM.M.pC.B{1, 1} = DCM.M.pC.B{1, 1} .*  DCM.B{1, 1}; 
 DCM.M.pC.B{1, 1} = 0.125*  DCM.B{1, 1}; 
 
+switch caseType
+    case 'Amatrix'
+        for i=1:3
+            DCM.Ep.A{1, i} = DCM.Ep.A{i} .*  DCM.A{1, i} - (1 - DCM.A{1, i}) .* 4;
+            DCM.M.pE.A{1, i} = DCM.M.pE.A{i} .*  DCM.A{1, i} - (1 - DCM.A{1, i}) .* 4;
+            DCM.M.pC.A{1, i} = DCM.M.pC.A{i} .*  DCM.A{1, i}; 
+        end 
+       
+        
+    case 'Bmatrix'
+        % When caseType is 'Bmatrix', the A matrix is not pruned
 
-%comment out if only B matrix is pruned 
-for i=1:3
-    DCM.Ep.A{1, i} = DCM.Ep.A{i} .*  DCM.A{1, i} - (1 - DCM.A{1, i}) .* 4;
-    DCM.M.pE.A{1, i} = DCM.M.pE.A{i} .*  DCM.A{1, i} - (1 - DCM.A{1, i}) .* 4;
-    DCM.M.pC.A{1, i} = DCM.M.pC.A{i} .*  DCM.A{1, i}; 
-end 
+        
+    otherwise
+        % If caseType does not match 'Amatrix' or 'Bmatrix'
+        error('Unknown case type specified.');
+end
 
 
 i = 1;
@@ -145,7 +173,7 @@ while i <= Nm
 
     % Create temporary DCM and generate ERPs for different models
     DCMtemp = DCM;
-    DCMtemp.M.hE = 2;
+    DCMtemp.M.hE = hE;
     DCMtemp.xU.u = U.u;
     DCMtemp.M.P = P_noisy;
     DCMtemp.M.pE = P_noisy;

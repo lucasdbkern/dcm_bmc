@@ -75,17 +75,6 @@ for i = 1:n
     end
 end
 
-% for i =1:n
-%     for j =1:n
-%         spm_plot_ci(DCMij{i,j}.Ep, DCMij{i,j}.Cp, DCMij{i,j}.x, '', '--r');
-%     end
-% end
-% 
-% for i = 1:n
-%     for j=1:n
-%         imagesc(DCMij{i,j}.M.pE.A{i}) 
-%     end
-% end
 
 
 % Create the subfolder path
