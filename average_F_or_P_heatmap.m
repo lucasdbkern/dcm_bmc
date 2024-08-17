@@ -49,7 +49,7 @@ colorbar;
 % Display the average matrix as a heatmap
 figure;
 h = heatmap(Pp);
-title('Posterior Probability (post) Heatmap');
+title('PEB+BMR Posterior Probability Heatmap');
 xlabel('Simulated Timeseries');
 ylabel('Fitted Models');
 colorbar;

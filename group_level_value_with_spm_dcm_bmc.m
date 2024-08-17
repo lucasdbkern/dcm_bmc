@@ -81,7 +81,7 @@ colorbar;
 
 figure;
 heatmap(averagePost);
-title('Posterior Probability (post) Heatmap');
+title(' BMC Posterior Probability Heatmap');
 xlabel('Simulated Timeseries');
 ylabel('Fitted Models');
 colorbar;

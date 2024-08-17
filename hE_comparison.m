@@ -47,7 +47,7 @@ function plot_barchart(data, titleText)
             %current_data = current_data(:);
             % Plot the bar chart for the current grid
             bar(2:6, current_data);  % x-axis corresponds to 2 to 6
-            title(sprintf('Model %d Timeseries %d)', i, j));
+            title(sprintf('Model %d Timeseries %d', i, j));
             xlabel('hE (2-6)');
             ylabel('Probability');
             xlim([1.5 6.5]); 
