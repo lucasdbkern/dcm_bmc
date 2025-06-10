@@ -19,7 +19,7 @@ multiple_subject_bmc.m: Script for generating multiple subjects with different n
 
 group_level_value_with_spm_dcm_bmc.m: Script for creating a confusion matrix based on the BMC results across all subjects.
 
-GCM_creator_for_PEB_confusion_matrix.m: Script for creating a Confusion Matrix for the PEB+BMC pipeline.
+GCM_creator_for_PEB_confusion_matrix.m: Script for creating a Confusion Matrix for the PEB+BMR pipeline.
 
 GCM_creator: Script for creating a Confusion Matrix. 
 
@@ -41,17 +41,17 @@ To run the BMC pipeline, follow these steps:
 
 The BMC pipeline will provide insights into the performance of different DCM models and help identify the best models for the given time series.
 
-Pipeline 2: PEB+BMC
-To run the PEB+BMC pipeline, follow these steps:
+Pipeline 2: PEB+BMR
+To run the PEB+BMR pipeline, follow these steps:
 
 1. Run erp_analysis.m to preprocess the ERP data and specify the DCM models.
 2. Run multiple_subject_bmc.m to generate multiple subjects and perform BMC on each subject's DCM models.
-3. Run GCM_creator.m, it is necessary for 
+3. Run GCM_creator.m, it is necessary for ...
 4. Run GCM_creator_for_PEB_confusion_matrix.m to create a Confusion Matrix for the PEB+BMC pipeline.
 5. Run peb.m to perform PEB analysis on the DCM models.
     Here it should be of note that you have to call PEB for all three cases:
     peb('Full'), peb('ORA'), peb('TRA')
-6. Run average_F_or_P_heatmap.m to create a confusion matrix based on the PEB+BMC results.
+6. Run average_F_or_P_heatmap.m to create a confusion matrix based on the PEB+BMR results.
 
 
 Alternatively, you can just call: pipeline2.m for pipeline2, which will call execute steps 3 to 5 automatically. 
