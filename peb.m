@@ -39,8 +39,8 @@ M.Q = 'all';
 M.X = []; % gets computed automatically if you pass the empty bracket. 
 
 % Choose field
-field = {'A','B'};
-%field = {'B'};
+%field = {'A','B'};
+field = {'B'};
 %field = {'A'};
 
 [PEB,DCM] = spm_dcm_peb(dcms , M, field); 
@@ -79,7 +79,6 @@ DCM3= GCM{1,3};
 save(fullfile(save_path, ['peb_bmr_results_' caseType '.mat']), 'BMR', 'BMA');
 
 end 
-
 
 
 

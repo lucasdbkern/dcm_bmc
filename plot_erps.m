@@ -1,0 +1,307 @@
+function plot_erps()
+spm('defaults','eeg');
+
+% Initialise cell arrays for the three model types
+DCM_full = cell(20, 1);
+DCM_ora = cell(20, 1);
+DCM_tra = cell(20, 1);
+
+% Load DCMs for all subjects
+for subj = 1:1
+    subject_id = sprintf('subject_%d', subj);
+    subject_folder = fullfile('/Users/lucaskern/Desktop/Desktop/UCL/Research_Project/github/subject_folder/', subject_id);
+    
+    dcmij_path = fullfile(subject_folder, 'derivatives', 'DCMij.mat');
+    dcm_data = load(dcmij_path);
+    DCMij = dcm_data.DCMij;
+    DCM = load('DCM_30-May-2024.mat');
+    
+    DCM_full{subj} = DCM; %DCMij{1,1};
+    DCM_ora{subj} = DCMij{2,2};
+    DCM_tra{subj} = DCMij{3,3};
+end
+
+time = linspace(-50, 400, 58);
+n_subjects = length(DCM_full);
+
+% Store activity - use cell arrays to accommodate matrix dimensions
+full_activity = cell(n_subjects, 1);
+ora_activity = cell(n_subjects, 1);
+tra_activity = cell(n_subjects, 1);
+
+% Calculate individual model responses
+for s = 1:n_subjects
+    % Full model
+    J = DCM_full{s}.Eg.J;
+    x = cell2mat(DCM_full{s}.x);
+    Proj = kron(eye(5), J);  % 5x45 for 5 time series
+    full_activity{s} = x * Proj';
+    
+    % ORA model  
+    J = DCM_ora{s}.Eg.J;
+    x = cell2mat(DCM_ora{s}.x);
+    Proj = kron(eye(5), J);
+    ora_activity{s} = x * Proj';
+    
+    % TRA model
+    J = DCM_tra{s}.Eg.J;
+    x = cell2mat(DCM_tra{s}.x);
+    Proj = kron(eye(5), J);
+    tra_activity{s} = x * Proj';
+end
+
+% Extract specific condition and region for plotting
+% Specify which condition (1=standard, 2=oddball) and which region (1-5)
+condition = 2;  % 1 for standard (rows 1-58), 2 for oddball (rows 59-116)
+region =1;     % Which of the 5 regions to plot
+
+full_data = zeros(n_subjects, length(time));
+ora_data = zeros(n_subjects, length(time));
+tra_data = zeros(n_subjects, length(time));
+
+for s = 1:n_subjects
+    % Extract the correct time slice based on condition
+    if condition == 1
+        time_idx = 1:58;  % Standard condition
+    else
+        time_idx = 59:116;  % Oddball condition  
+    end
+    
+    % Extract specific condition and region
+    full_data(s, :) = full_activity{s}(time_idx, region);
+    ora_data(s, :) = ora_activity{s}(time_idx, region);
+    tra_data(s, :) = tra_activity{s}(time_idx, region);
+end
+
+% Calculate statistics
+full_mean = mean(full_data, 1);
+full_std = std(full_data, 0, 1);
+ora_mean = mean(ora_data, 1);
+ora_std = std(ora_data, 0, 1);
+tra_mean = mean(tra_data, 1);
+tra_std = std(tra_data, 0, 1);
+
+% Ensure all are row vectors
+time = time(:)';
+full_mean = full_mean(:)';
+full_std = full_std(:)';
+ora_mean = ora_mean(:)';
+ora_std = ora_std(:)';
+tra_mean = tra_mean(:)';
+tra_std = tra_std(:)';
+
+% Create the ERP comparison plot
+figure('Position', [100,100,1000,600]);
+
+% Full model (blue)
+fill([time, fliplr(time)], [full_mean + full_std, fliplr(full_mean - full_std)], ...
+     [0.3 0.6 1], 'FaceAlpha', 0.3, 'EdgeColor', 'none');
+hold on;
+plot(time, full_mean, 'b-', 'LineWidth', 3, 'DisplayName', 'Full Connectivity');
+
+% ORA model (green)
+fill([time, fliplr(time)], [ora_mean + ora_std, fliplr(ora_mean - ora_std)], ...
+     [0.3 0.8 0.3], 'FaceAlpha', 0.3, 'EdgeColor', 'none');
+plot(time, ora_mean, 'g-', 'LineWidth', 3, 'DisplayName', 'ORA (Pruned)');
+
+% TRA model (red)
+fill([time, fliplr(time)], [tra_mean + tra_std, fliplr(tra_mean - tra_std)], ...
+     [1 0.3 0.3], 'FaceAlpha', 0.3, 'EdgeColor', 'none');
+plot(time, tra_mean, 'r-', 'LineWidth', 3, 'DisplayName', 'TRA (Heavily Pruned)');
+
+xlabel('Time (ms)');
+ylabel('rIFG Neural Activity');
+title('ERP Response Changes with Connection Pruning - Group Mean ± Std');
+legend('Location', 'best');
+grid on;
+
+end
+
+% 
+% 
+% spm('defaults','eeg');
+% 
+% % Initialise cell arrays for the three model types
+% DCM_full = cell(20, 1);
+% DCM_ora = cell(20, 1);
+% DCM_tra = cell(20, 1);
+% 
+% % Load DCMs for all subjects
+% for subj = 1:20
+%     % Build paths for subject files
+%     subject_id = sprintf('subject_%d', subj);
+%     subject_folder = fullfile('/Users/lucaskern/Desktop/Desktop/UCL/Research_Project/github/subject_folder/', subject_id);
+% 
+%     % Load DCMij.mat file
+%     dcmij_path = fullfile(subject_folder, 'derivatives', 'DCMij.mat');
+% 
+% 
+%     dcm_data = load(dcmij_path);
+%     DCMij = dcm_data.DCMij;
+% 
+%     DCM_full{subj} = DCMij{1,1};  
+%     DCM_ora{subj} = DCMij{2,2};  
+%     DCM_tra{subj} = DCMij{3,3};   
+% 
+% end
+% 
+% time = DCM_full{1}.xY.pst;  % Peristimulus time in ms (e.g., -100 to 400 ms)
+% n_subjects = length(DCM_full);
+% 
+% % store activity 
+% full_activity = zeros(n_subjects, length(time));
+% ora_activity = zeros(n_subjects, length(time));
+% tra_activity = zeros(n_subjects, length(time));
+% 
+% 
+% % individual model response
+% for s = 1:n_subjects
+% 
+%     L = feval(DCM_full{s}.M.G, DCM_full{s}.Eg,DCM_full{s}.M);
+%     %J = eye(5); %DCM_full{s}.Eg.J;
+%     %Proj = kron(J,L)';
+%     x = cell2mat(DCM_full{s}.x);
+%     full_activity(s,:,:) = x * L.';
+% 
+%     L = feval(DCM_ora{s}.M.G, DCM_ora{s}.Eg,DCM_ora{s}.M);
+%     %J = eye(5); DCM_ora{s}.Eg.J;
+%     %Proj = kron(J,L)';
+%     x = cell2mat(DCM_ora{s}.x);
+%     full_activity(s,:,:) = x * L.';
+% 
+%     L = feval(DCM_tra{s}.M.G, DCM_tra{s}.Eg, DCM_tra{s}.M);
+%     %J = eye(5); %DCM_tra{s}.Eg.J;
+%     %Proj = kron(J,L)';
+%     x = cell2mat(DCM_tra{s}.x);
+%     full_activity(s,:,:) = x * L.';
+% 
+% 
+% 
+% % Mean and standard deviation across subjects
+% full_mean = mean(full_activity, 1);  % Average across subjects 
+% full_std = std(full_activity, 0, 1);  % Standard deviation across subjects
+% ora_mean = mean(ora_activity, 1);
+% ora_std = std(ora_activity, 0, 1);
+% tra_mean = mean(tra_activity, 1);
+% tra_std = std(tra_activity, 0, 1);
+% 
+% % Ensure all are row vectors 
+% time = time(:)';
+% full_mean = full_mean(:)';
+% full_std = full_std(:)';
+% ora_mean = ora_mean(:)';
+% ora_std = ora_std(:)';
+% tra_mean = tra_mean(:)';
+% tra_std = tra_std(:)';
+% 
+% 
+% % create the ERP pruning comparison plot
+% figure('Position', [100,100,1000,600]);
+% 
+% % FULL model (blue) - Most connectivity
+% % Create shaded confidence band 
+% fill([time, fliplr(time)], [full_mean + full_std, fliplr(full_mean - full_std)], ...
+%      [0.3 0.6 1], 'FaceAlpha', 0.3, 'EdgeColor', 'none');
+% hold on;
+% % Plot the group mean line
+% plot(time, full_mean, 'b-', 'LineWidth', 3, 'DisplayName', 'Full Connectivity');
+% 
+% % ORA model (green) - Moderate connectivity
+% fill([time, fliplr(time)], [ora_mean + ora_std, fliplr(ora_mean - ora_std)], ...
+%      [0.3 0.8 0.3], 'FaceAlpha', 0.3, 'EdgeColor', 'none');
+% plot(time, ora_mean, 'g-', 'LineWidth', 3, 'DisplayName', 'ORA (Pruned)');
+% 
+% % TRA model (red) - Minimal connectivity  
+% fill([time, fliplr(time)], [tra_mean + tra_std, fliplr(tra_mean - tra_std)], ...
+%      [1 0.3 0.3], 'FaceAlpha', 0.3, 'EdgeColor', 'none');
+% plot(time, tra_mean, 'r-', 'LineWidth', 3, 'DisplayName', 'TRA (Heavily Pruned)');
+% 
+% xlabel('Time (ms)');
+% ylabel('rIFG Neural Activity');
+% title('ERP Response Changes with Connection Pruning - Group Mean ± Std');
+% legend('Location', 'best');
+% grid on;
+% 
+% 
+% end
+
+% function demo_feval()
+% 
+% load('/Users/lucaskern/Desktop/Desktop/UCL/Research_Project/github/results/DCMs_multi_subject_BMR_fail.mat');
+% 
+% %spm_dcm_erp_results(DCMs_multi{17,1}); % Full connectivity
+% %spm_dcm_erp_results(DCMs_multi{17,end}); % Max pruning
+% 
+% %% Simple overlay
+% before = feval(DCMs_multi{1,1}.M.IS, DCMs_multi{1,1}.Ep, DCMs_multi{1,1}.M, DCMs_multi{1,1}.xU);
+% after = feval(DCMs_multi{1,end}.M.IS, DCMs_multi{1,end}.Ep, DCMs_multi{1,end}.M, DCMs_multi{1,end}.xU);
+% 
+% figure;
+% plot(DCMs_multi{1,1}.xY.pst, before{2}(:,3), 'b-', 'LineWidth', 2); % lSTG before
+% hold on;
+% plot(DCMs_multi{1,1}.xY.pst, after{2}(:,3), 'r--', 'LineWidth', 2); % lSTG after
+% xlabel('Time'); ylabel('lSTG Activity'); legend('Before', 'After');
+% 
+% 
+% 
+% time = DCMs_multi{1,1}.xY.pst;
+% 
+% % Pre-allocate for just BEFORE and AFTER
+% n_subjects = size(DCMs_multi,1);
+% before_activity = zeros(n_subjects, length(time));
+% after_activity = zeros(n_subjects, length(time));
+% 
+% % Get activity for all subjects (lSTG, deviant trial)
+% for s = 1:n_subjects
+%     % BEFORE: First condition (full connectivity)
+%     x_before = feval(DCMs_multi{s,1}.M.IS, DCMs_multi{s,1}.Ep, DCMs_multi{s,1}.M, DCMs_multi{s,1}.xU);
+%     before_activity(s,:) = x_before{2}(:,3); % Deviant, lSTG
+% 
+%     % AFTER: Last condition (maximum pruning)
+%     x_after = feval(DCMs_multi{s,end}.M.IS, DCMs_multi{s,end}.Ep, DCMs_multi{s,end}.M, DCMs_multi{s,end}.xU);
+%     after_activity(s,:) = x_after{2}(:,3); % Deviant, lSTG
+% end
+% 
+% % Calculate group statistics
+% before_mean = mean(before_activity, 1);
+% before_std = std(before_activity, 0, 1);
+% after_mean = mean(after_activity, 1);
+% after_std = std(after_activity, 0, 1);
+% 
+% % Make sure all are row vectors
+% time = time(:)';
+% before_mean = before_mean(:)';
+% before_std = before_std(:)';
+% after_mean = after_mean(:)';
+% after_std = after_std(:)';
+% 
+% % Plot clean before/after comparison
+% figure('Position', [100,100,800,500]);
+% 
+% % BEFORE (blue)
+% fill([time, fliplr(time)], [before_mean + before_std, fliplr(before_mean - before_std)], ...
+%      [0.3 0.6 1], 'FaceAlpha', 0.3, 'EdgeColor', 'none');
+% hold on;
+% plot(time, before_mean, 'b-', 'LineWidth', 3, 'DisplayName', 'Before Pruning');
+% 
+% % AFTER (red)
+% fill([time, fliplr(time)], [after_mean + after_std, fliplr(after_mean - after_std)], ...
+%      [1 0.3 0.3], 'FaceAlpha', 0.3, 'EdgeColor', 'none');
+% plot(time, after_mean, 'r-', 'LineWidth', 3, 'DisplayName', 'After Pruning');
+% 
+% xlabel('Time (ms)');
+% ylabel('lSTG Activity');
+% title('Before vs After Pruning: Group Mean ± Std');
+% legend('Location', 'best');
+% grid on;
+% 
+% % Add some stats
+% max_before = max(abs(before_mean));
+% max_after = max(abs(after_mean));
+% reduction = (max_before - max_after) / max_before * 100;
+% text(0.02, 0.98, sprintf('Peak reduction: %.1f%%', reduction), ...
+%      'Units', 'normalized', 'VerticalAlignment', 'top', 'BackgroundColor', 'white');
+% 
+% end
+% 
+
