@@ -155,7 +155,6 @@ subplot(2,2,3); show(obsD ,t,ne,L,'Observed – Deviant');
 subplot(2,2,4); show(predD,t,ne,L,'Predicted – Deviant');
 colormap(cmap);
 
-
 end 
 
 % ------------ helpers ------------
