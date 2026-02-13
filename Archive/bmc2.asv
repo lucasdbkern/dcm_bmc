@@ -1,0 +1,236 @@
+function bmc2(file_paths, dcm_mat_file, customA_files, parameter_hE, parameter_hC)
+% BMC 
+% If you dont put brackets around the file paths {file, file2, fil3} it
+% wont work
+
+
+success = true;
+errmsg = '';
+
+spm('defaults', 'eeg')
+
+% Number of files/models
+n = length(file_paths);
+
+% Loads the DCM struct from the .mat file
+l_data = load(dcm_mat_file, 'DCM');
+DCM = l_data.DCM;
+
+
+
+
+% Initialize arrays to store models, timeseries, and inputs
+Ms = cell(n, 1);
+Ys = cell(n, 1);
+U = DCM.xU;
+
+DCM.M.hE = parameter_hE;
+%DCM.M.Nmax = 1;
+
+
+
+DCM = spm_dcm_erp_dipfit(DCM,1);
+
+
+
+% Loads models and  timeseries from files
+for i = 1:n
+    Ms{i} = l_data.DCM; % Model
+    
+    Ms{i}.M.dipfit = DCM.M.dipfit;
+
+    loaded_data = load(file_paths{i}); 
+    Ys{i}.y = loaded_data.all_erp; % Timeseries 
+end
+
+
+
+for j = 1:n % if you want the first subject to be full, set 1 to 2. 
+    idx = (j-1) * 3 + 1;
+    % Checks if there are enough entries in customA_files to update the model
+    if length(customA_files) < idx+2
+        error('Not enough entries in customA_files to update the model for j = %d. Needed at least %d, found %d.', j, idx+2, length(customA_files));
+    end
+    Ms{j}.A = cell(1,3);
+    if ~isempty(customA_files{idx})
+        loadedA1 = load(customA_files{idx});
+        fields = fieldnames(loadedA1);
+        A1 = loadedA1.(fields{1});
+        %A = extractfield(loadedA1, fields{1});
+        %disp(A);
+        Ms{j}.A{1,1} = A1;  % Assuming each .mat file contains A matrix in variable A
+        %disp(Ms{j}.A{1,1});
+        
+    end
+    if ~isempty(customA_files{idx+1})
+        loadedA2 = load(customA_files{idx+1});
+        fields = fieldnames(loadedA2);
+        A2 = loadedA2.(fields{1});
+        Ms{j}.A{1,2} = A2;
+        %disp(Ms{j}.A{1,2});
+    end
+    if ~isempty(customA_files{idx+2})
+        loadedA3 = load(customA_files{idx+2});
+        fields = fieldnames(loadedA3);
+        A3 = loadedA3.(fields{1});
+        Ms{j}.A{1,3} = A3;
+        %disp(Ms{j}.A{1,3});
+    end
+end
+
+%for j =1:n
+%    for i=1:n
+%        figure
+ %       imagesc(Ms{j}.A{1,i})
+  %      xticks(1:5);
+   %     yticks(1:5);
+  %      xticklabels(Ms{j}.Sname)
+%        yticklabels(Ms{j}.Sname)
+ %       colormap gray;
+  %      axis square;
+   % end 
+%end
+
+
+
+
+
+
+
+if isempty(Ms{1}.A{1,1})
+    disp('Matrix is empty.');
+else
+    disp('Matrix is not empty:');
+    %disp(Ms{1}.A{1,1});
+end
+
+% adjust the B matrix based on the new A matrices provided:
+for j=1:n   
+    Ms{j}.B{1,1} = (~~Ms{j}.B{1,1})&(Ms{j}.A{1,1}|Ms{j}.A{1,2}|Ms{j}.A{1,3});
+end 
+
+
+% Custom U creation for each model
+noise_magnitude_Ep = 0.1; 
+noise_magnitude_u = 0.05; 
+
+
+for i = 1:n
+    Pvec = spm_vec(DCM.Ep); 
+    sqrtpC = sqrt(diag(DCM.Cp));
+    noise = normrnd(0, 1, [232, 1]) .* sqrtpC;
+    Pvec_noisy = Pvec + (noise_magnitude_Ep * noise); 
+    P_noisy = spm_unvec(Pvec_noisy, DCM.Ep);
+    
+    % Assuming M and U are properly initialized and M.ns and U.dt are available
+    U.u = spm_erp_u((1:DCM.M.ns)*U.dt, P_noisy, DCM.M);
+    noise_u = noise_magnitude_u * randn(size(U.u));
+    U.u = U.u + noise_u;
+   
+end
+
+
+
+
+% Adjusts the  priors for each model with the updated A and B matrices
+for i = 1:n
+    [Ms{i}.M.pE, Ms{i}.M.pC] = spm_dcm_neural_priors(Ms{i}.A, Ms{i}.B, Ms{i}.C, 'CMC'); %previously 'ERP'
+   
+    Ms{i}.M.m = 1; 
+     
+end
+
+
+%%disp(Ms{2});
+
+
+% Initializes matrices for nested model inversion results
+Ep = cell(n, n);
+Cp = cell(n, n);
+Eh = cell(n, n);
+F = zeros(n, n);
+L = cell(n, n);
+dFdp = cell(n, n);
+dFdpp = cell(n, n);
+
+
+
+
+
+
+% Performs model inversion
+for i = 1:n
+    for j = 1:n
+        %try
+            % Displays current iteration status
+            disp(['Processing model inversion for M', num2str(i), ' with Y', num2str(j)]);
+            
+            % Performs the model inversion using spm_nlsi_GN function
+            xY = DCM.xY;
+            xY.y = Ys{j}.y;
+            
+            Ms{i}.M.hC = parameter_hC;
+            %Ms{i}.M.hC = 0.03125;
+            try 
+                [Ep{i, j}, Cp{i, j}, Eh{i, j}, F(i, j), L{i, j}, dFdp{i, j}, dFdpp{i, j}] = spm_nlsi_GN(Ms{i}.M, U, xY);
+            catch ME
+                success = false;
+                return;
+                %errmsg = sprintf('Error in BMC: %s', ME.message);
+            end
+    end
+end 
+
+
+if success 
+
+    noise_magnitude_erp = 1.5;
+
+    % Create a custom identifier based on input variables
+    %custom_identifier = ['hE_', num2str(parameter_hE), '_hC_', num2str(parameter_hC), ...
+                        % '_noiseEp_', num2str(noise_magnitude_Ep), '_noiseu_', num2str(noise_magnitude_u), ...
+                        % '_noiseerp_', num2str(noise_magnitude_erp)];
+    
+    % Create a structure to hold all the relevant variables
+   % results = struct('Ep', Ep, 'Cp', Cp, 'Eh', Eh, 'F', F, 'L', L, 'dFdp', dFdp, 'dFdpp', dFdpp);
+    
+    
+    disp('Free Energy (F) Matrix:')
+    save('FreeEnergyMatrix.mat', 'F');
+    
+    %filename = sprintf('FreeEnergyMatrix_%s.mat', custom_identifier);
+    %save(filename, 'F');
+
+      % Save the structure to a file with a custom identifier
+  %  filename = ['BMC_Results_', custom_identifier, '.mat'];
+   % save(filename, 'results');
+
+    
+    
+    
+    
+    % Save the structure to a file with a custom identifier
+  %  filename = ['BMC_Results_', custom_identifier, '.mat'];
+   % save(filename, 'results');
+    
+    % Add other variables you want to save
+    results.Ms = Ms;
+    results.Ys = Ys;
+    
+    figure;
+    heatmap(F);
+    title('Free Energy (F) Heatmap');
+    colorbar;
+    
+    % Assuming n is the number of models and datasets
+    model_labels = arrayfun(@(i) sprintf('Ys{%d}', i), 1:n, 'UniformOutput', false);
+    data_labels = arrayfun(@(i) sprintf('Ms{%d}', i), 1:n, 'UniformOutput', false);
+    
+    % Creating the heatmap with the labeled rows and columns
+    figure;
+    heatmap(model_labels, data_labels, F);
+    title('Free Energy (F) Heatmap');
+    colorbar;
+
+
+end

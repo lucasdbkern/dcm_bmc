@@ -1,0 +1,68 @@
+function mahalanobis_distance()
+
+% Load DCM data
+for subj = 1:20
+    subject_folder = fullfile('/Users/lucaskern/Desktop/Desktop/UCL/Research_Project/github/subject_folder', sprintf('subject_%d', subj));
+    dcm_data = load(fullfile(subject_folder, 'derivatives', 'DCMij.mat'));
+    DCM_full{subj} = dcm_data.DCMij{1,1};
+    DCM_ora{subj} = dcm_data.DCMij{2,2};
+    DCM_tra{subj} = dcm_data.DCMij{3,3};
+end
+
+% Calculate mean channel-wise Mahalanobis distance
+M_distance = zeros(20, 3);
+
+for s = 1:20
+    % Full vs ORA
+    Ce_pooled = 0.5 * (DCM_full{s}.Ce + DCM_ora{s}.Ce);  % Pool covariances
+    Ce_inv = inv(Ce_pooled);                             % Invert to get precision matrix
+    channel_dist = [];
+    for cond = 1:length(DCM_full{s}.H)
+        H_diff = DCM_full{s}.H{cond} - DCM_ora{s}.H{cond}; % Difference matrix: 58×9
+        for ch = 1:size(H_diff, 2)                         % Loop over 9 channels
+            e_ch = H_diff(:, ch);                           % Extract time series for channel ch: 58×1
+            d_ch = sqrt(e_ch' * Ce_inv * e_ch);             % Mahalanobis distance for this channel
+            channel_dist = [channel_dist, d_ch];            % Collect distances
+        end
+    end
+    M_distance(s,1) = mean(channel_dist);                   % Mean across all channels
+    
+    % Full vs TRA  
+    Ce_pooled = 0.5 * (DCM_full{s}.Ce + DCM_tra{s}.Ce);
+    Ce_inv = inv(Ce_pooled);
+    channel_dist = [];
+    for cond = 1:length(DCM_full{s}.H)
+        H_diff = DCM_full{s}.H{cond} - DCM_tra{s}.H{cond};
+        for ch = 1:size(H_diff, 2)
+            e_ch = H_diff(:, ch);
+            d_ch = sqrt(e_ch' * Ce_inv * e_ch);
+            channel_dist = [channel_dist, d_ch];
+        end
+    end
+    M_distance(s,2) = mean(channel_dist);
+    
+    % ORA vs TRA
+    Ce_pooled = 0.5 * (DCM_ora{s}.Ce + DCM_tra{s}.Ce);
+    Ce_inv = inv(Ce_pooled);
+    channel_dist = [];
+    for cond = 1:length(DCM_ora{s}.H)
+        H_diff = DCM_ora{s}.H{cond} - DCM_tra{s}.H{cond};
+        for ch = 1:size(H_diff, 2)
+            e_ch = H_diff(:, ch);
+            d_ch = sqrt(e_ch' * Ce_inv * e_ch);
+            channel_dist = [channel_dist, d_ch];
+        end
+    end
+    M_distance(s,3) = mean(channel_dist);
+end
+
+% Plot
+boxplot(M_distance, 'Labels', {'Full vs ORA', 'Full vs TRA', 'ORA vs TRA'});
+ylabel('Mean Mahalanobis Distance');
+title('Channel-wise Mahalanobis Distance');
+
+end
+
+%-> try to see if you can use something if you cant use mean? which is
+%strange? otherwise, i would suggest using matlab online to run this
+%analysis to make it easier. plot them and that should be it 

@@ -1,0 +1,2 @@
+﻿Chumbley, J.R., Friston, K.J., Fearn, T. & Kiebel, S.J. (2007) A Metropolis–Hastings algorithm for dynamic causal models. Neuroimage, 38, 478-487.
+
