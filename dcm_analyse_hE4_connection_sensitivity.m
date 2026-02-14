@@ -102,31 +102,3 @@ save_path = fullfile('/Users/lucaskern/Desktop/Desktop/UCL/Research_Project/gith
 save(save_path, 'DCMs', 'multipliers');
 fprintf('Results saved to %s\n', save_path);
 end
-
-
-% check if it does the exact same free energy to the decimal 
-% call spm_vec on two dcms 
-% take the one from the confusion matrix and then the exp(-16) pruned one
-% for one subject and see
-
-% plot the free energy for both dcms for both grad pruned and confusion
-% matrix  - for all three architectures  --> if they are not that means
-% thers a problem . 
-
-% it might be worth to look at what is the initial value of M.pC - so on
-% your line 79 
-
-%  change DCM_ORA.M.pC.B{1,1}(3,1) to (~~DCM_ORA.M.pC.B{1,1}(3,1)) -->
-%  change that 
-
-
-% feval(M.IS, DCM.Ep, DCM.M, DCM.xU) --> do this for all the data for the
-% gradual pruning 
-% plot the odball response in one region that gets pruned -> and show how
-% the strong erp decays 
-% add error shaded area 
-% add one panel with the confusion matrix as well 
-% we can look at the erp before and after to see if there is a difference
-% in non-linear components ("lobes")
-% re eveluate the integrator so we can plot it
-% for screenshots - computeleast square function - do norm of the residuals 
