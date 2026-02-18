@@ -80,37 +80,4 @@ switch n
         grid on;
         box on;
         set(gca, 'FontSize', 12, 'LineWidth', 1);
-
-
-
-
-    %     % Plot group averages with standard deviation
-    %     figure; hold on;
-    % 
-    %     % Group standard deviation as shaded regions
-    %     fill([strengths, fliplr(strengths)], ...
-    %          [group_mean_reduced + ci_reduced, fliplr(group_mean_reduced - ci_reduced)], ...
-    %          'r', 'FaceAlpha', 0.2, 'EdgeColor', 'none', 'DisplayName', 'BMR ± SD');
-    %     fill([strengths, fliplr(strengths)], ...
-    %          [group_mean_F + ci_F, fliplr(group_mean_F - ci_F)], ...
-    %          'b', 'FaceAlpha', 0.2, 'EdgeColor', 'none', 'DisplayName', 'BMC ± SD');
-    % 
-    %     % Group mean lines
-    %     plot(strengths, group_mean_reduced, 'r-', 'LineWidth', 2, 'DisplayName', 'BMR Group Mean');
-    %     plot(strengths, group_mean_F, 'b--', 'LineWidth', 2, 'DisplayName', 'BMC Group Mean');
-    % 
-    %     xlabel('Connectivity strength');
-    %     ylabel('Free Energy difference (relative to starting model)');
-    %     title(sprintf('Group Average Free Energy (N=%d subjects)', n_subjects));
-    %     legend('Location', 'best');
-    %     grid on;
-    % 
-    %     % Print some summary statistics
-    %     fprintf('Group BMR range: %.2f to %.2f\n', min(group_mean_reduced), max(group_mean_reduced));
-    %     fprintf('Group BMC range: %.2f to %.2f\n', min(group_mean_F), max(group_mean_F));
-    % 
-    % case 2
-    %     % Similar for 2-parameter case...
-    %     
-end
 end

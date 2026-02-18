@@ -1,4 +1,4 @@
-function simple_column3_hE_analysis()
+function analyze_repr_kl_column3_across_hE()
 %==========================================================================
 % Simple analysis of column 3 (TRA as data source) across hE values
 % Uses your existing file structure

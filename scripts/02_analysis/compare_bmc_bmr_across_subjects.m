@@ -3,7 +3,7 @@ function compare_bmc_bmr_across_subjects()
 % Compares Free Energy differences between a Full DCM and modified DCMs 
 % across multiple subjects.
 %
-% Before executing this method, run dcm_analyse_hE4_connection_sensitivity()
+% Before executing this method, run prune_connections_vary_strength()
 % to generate the Variational Bayes Free Energy scores for each subject.
 %
 % For each subject, the Full (baseline, exp(0)) model is used to compute two
