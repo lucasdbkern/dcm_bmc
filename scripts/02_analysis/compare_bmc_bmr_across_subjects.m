@@ -20,10 +20,6 @@ function compare_bmc_bmr_across_subjects()
 %   - Dashed lines: Full Free Energy differences (variational Bayes) 
 %
 %==========================================================================
-%load_path = fullfile('/Users/lucaskern/Desktop/Desktop/UCL/Research_Project/github/results', ...
-                    % 'dcm_hE4_connection_sensitivity_23to33pEandpC_fixed.mat');
-
-
 load_path = fullfile('/Users/lucaskern/Desktop/Desktop/UCL/Research_Project/github/results', ...
                      'dcm_hE4_connection_sensitivity_ORA_reset_2.mat');
 
